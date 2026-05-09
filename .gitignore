@@ -76,12 +76,7 @@ manipuri_emotion_model/
 manipuri_transformer_model/
 results/
 logs/
-*.pkl
-*.bin
-*.pt
-*.h5
-*.joblib
-*.model
+
 
 # Training artifacts
 confusion_matrix.png
