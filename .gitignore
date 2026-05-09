@@ -1,7 +1,8 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# Python virtual environments
+.venv/
+venv/
+ENV/
+env/
 
 # C extensions
 *.so
@@ -27,15 +28,20 @@ share/python-wheels/
 MANIFEST
 
 # Virtual Environments
+.env.bak/
 .venv/
 venv/
 ENV/
 env/
-env.bak/
 venv.bak/
 
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
 # Jupyter Notebook
-.ipynb_checkpoints
+.ipynb_checkpoints/
 
 # Streamlit
 .streamlit/
@@ -48,15 +54,18 @@ venv.bak/
 .DS_Store
 .DS_Store?
 ._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
 
 # Data and model files (large files)
 *.csv
 *.xlsx
 manipuri_ultra_final/
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
 # Machine Learning generated models and files
 # These are too large for GitHub or should be generated locally
@@ -76,7 +85,5 @@ confusion_matrix.png
 emotion_distribution.png
 checkpoint-*/
 
-# Dataset (Uncomment if you want to keep the dataset local)
-# manipuri_emotion_dataset_main1.xlsx
-*.pkl
-*.xlsx
+# Nested project
+manipuri/
