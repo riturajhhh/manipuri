@@ -35,6 +35,9 @@ ENV/
 env/
 venv.bak/
 
+# Nested project
+manipuri/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -84,6 +87,3 @@ logs/
 confusion_matrix.png
 emotion_distribution.png
 checkpoint-*/
-
-# Nested project
-manipuri/
