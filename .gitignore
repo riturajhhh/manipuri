@@ -1,0 +1,82 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Streamlit
+.streamlit/
+
+# VS Code / IDE settings
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+
+# Data and model files (large files)
+*.csv
+*.xlsx
+manipuri_ultra_final/
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Machine Learning generated models and files
+# These are too large for GitHub or should be generated locally
+manipuri_emotion_model/
+manipuri_transformer_model/
+results/
+logs/
+*.pkl
+*.bin
+*.pt
+*.h5
+*.joblib
+*.model
+
+# Training artifacts
+confusion_matrix.png
+emotion_distribution.png
+checkpoint-*/
+
+# Dataset (Uncomment if you want to keep the dataset local)
+# manipuri_emotion_dataset_main1.xlsx
+*.pkl
+*.xlsx
