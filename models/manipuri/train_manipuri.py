@@ -99,16 +99,7 @@ def build_features():
 def get_models():
     models = {}
 
-    # Bagged SVMs (best performers from V3)
-    for c in [0.5, 1.0, 1.5, 2.0]:
-        models[f'bag_svm_c{c}'] = BaggingClassifier(
-            estimator=CalibratedClassifierCV(
-                LinearSVC(C=c, dual=False, class_weight='balanced', max_iter=10000, random_state=SEED)
-            ),
-            n_estimators=20, max_samples=0.85, max_features=0.85, random_state=SEED, n_jobs=-1
-        )
-
-    # Calibrated SVMs
+    # Calibrated SVMs (Much smaller file size, safe for GitHub)
     for c in [0.5, 1.0, 2.0]:
         models[f'svm_c{c}'] = CalibratedClassifierCV(
             LinearSVC(C=c, dual=False, class_weight='balanced', max_iter=10000, random_state=SEED)
@@ -164,7 +155,7 @@ def load_combined_data():
     print(f"  Classes: {sorted(df1['emotion'].unique())}")
 
     # --- Dataset 2: 100K Meitei CSV (deduplicated) ---
-    df2 = pd.read_csv('meitei_emotion_dataset_100k.csv')
+    df2 = pd.read_csv(path2)
     df2 = df2.drop_duplicates(subset='text')
     df2['emotion'] = df2['emotion'].astype(str).str.strip().str.lower()
     df2['source'] = 'meitei_100k'

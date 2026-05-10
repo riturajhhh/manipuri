@@ -403,7 +403,7 @@ if submitted or user_input:
                 render_result(emotion, confidence, probs, manipuri_classes,
                               "ꯃꯩꯇꯩ Manipuri", "lang-badge-manipuri", model_type)
             else:
-                st.error("❌ Manipuri model not found! Train with `python train_combined_v2.py`")
+                st.error("Manipuri model not found! Train with `python models/manipuri/train_manipuri.py`")
 
         # --- ASSAMESE ---
         elif detected_lang == 'assamese':

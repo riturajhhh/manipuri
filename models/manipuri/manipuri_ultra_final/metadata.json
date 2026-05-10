@@ -1,5 +1,5 @@
 {
-  "type": "combined_bag_svm_c1.0",
+  "type": "combined_svm_c0.5",
   "classes": [
     "anger",
     "calm",
@@ -14,7 +14,7 @@
     "tired"
   ],
   "test_accuracy": 0.7970297029702971,
-  "best_model": "bag_svm_c1.0",
+  "best_model": "svm_c0.5",
   "n_train": 4102,
   "n_test": 202,
   "n_classes": 11
