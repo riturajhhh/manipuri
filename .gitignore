@@ -1,13 +1,10 @@
-# Python virtual environments
-.venv/
-venv/
-ENV/
-env/
-
-# C extensions
+# ============================================================
+# Python & Environment
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -28,32 +25,19 @@ share/python-wheels/
 MANIFEST
 
 # Virtual Environments
-.env.bak/
 .venv/
 venv/
 ENV/
 env/
+env.bak/
 venv.bak/
 
-# Nested project
-manipuri/
-
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Jupyter Notebook
-.ipynb_checkpoints/
-
-# Streamlit
-.streamlit/
-
-# VS Code / IDE settings
+# ============================================================
+# IDEs & OS Files
+# ============================================================
+.ipynb_checkpoints
 .vscode/
 .idea/
-
-# OS generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -62,23 +46,25 @@ __pycache__/
 ehthumbs.db
 Thumbs.db
 
-# Logs
-*.log
+# ============================================================
+# Streamlit
+# ============================================================
+.streamlit/
 
-# Data and model files (large files)
-*.csv
-*.xlsx
-manipuri_ultra_final/
+# ============================================================
+# Machine Learning Models & Checkpoints
+# ============================================================
+# Ignore heavy Transformer models and checkpoints (Exceeds GitHub 100MB limit)
+models/assamese/assamese_transformer_final/
+models/manipuri/manipuri_ultra_final/transformer/
+models/manipuri/manipuri_ultra_final/ultra_pipeline.pkl
+checkpoint-*/
 
-# Machine Learning generated models and files
-# These are too large for GitHub or should be generated locally
-manipuri_emotion_model/
-manipuri_transformer_model/
+# Note: Classical ML models (manipuri_ultra_final, assamese_ultra_final, mizo_ultra_final)
+# and the `datasets/` folder are NOT ignored so they can be pushed to GitHub for deployment.
+
+# Temporary training artifacts
 results/
 logs/
-
-
-# Training artifacts
 confusion_matrix.png
 emotion_distribution.png
-checkpoint-*/

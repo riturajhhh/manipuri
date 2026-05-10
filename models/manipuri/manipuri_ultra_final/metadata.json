@@ -1,0 +1,21 @@
+{
+  "type": "combined_bag_svm_c1.0",
+  "classes": [
+    "anger",
+    "calm",
+    "disgust",
+    "excited",
+    "fear",
+    "joy",
+    "lonely",
+    "proud",
+    "sadness",
+    "surprise",
+    "tired"
+  ],
+  "test_accuracy": 0.7970297029702971,
+  "best_model": "bag_svm_c1.0",
+  "n_train": 4102,
+  "n_test": 202,
+  "n_classes": 11
+}

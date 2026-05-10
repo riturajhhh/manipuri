@@ -1,0 +1,16 @@
+{
+  "type": "mizo_svm_c1.0",
+  "language": "mizo",
+  "classes": [
+    "anger",
+    "fear",
+    "joy",
+    "neutral",
+    "sadness"
+  ],
+  "test_accuracy": 0.8003355704697986,
+  "best_model": "svm_c1.0",
+  "n_train": 12662,
+  "n_test": 596,
+  "n_classes": 5
+}

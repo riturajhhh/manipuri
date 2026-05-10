@@ -1,0 +1,10 @@
+joblib
+scikit-learn
+pandas
+numpy
+streamlit
+openpyxl
+# Optional - for transformer model (better accuracy):
+# torch
+# transformers
+# accelerate

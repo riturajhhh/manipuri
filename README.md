@@ -1,91 +1,115 @@
-# 🎭 Manipuri Emotion Detection
+# 🌏 Multilingual Emotion AI
 
-![Dashboard UI](demo.png)
-
-A high-speed, state-of-the-art emotion detection system and interactive dashboard specifically optimized for the Manipuri language (Meitei Mayek & Bengali scripts). 
-
-## 📌 Project Overview
-
-Manipuri is an agglutinative language with complex morphology and unique script structures. This project tackles these challenges using a **Highly Optimized Classical Ensemble Pipeline** that delivers instant predictions without the massive overhead of Transformer models.
-
-Through extensive iterative development, we combined a high-quality human-annotated dataset (~1,200 samples) with a massive 100K synthetic dataset. By applying rigorous deduplication, we eliminated cross-validation leakage and expanded the model's intelligence to recognize **11 distinct emotional states** with an impressive **~80% accuracy**.
-
-### 🧠 Detected Emotions (11 Classes):
-*   **Joy** (🌈)
-*   **Sadness** (🌊)
-*   **Anger** (🌋)
-*   **Fear** (🛡️)
-*   **Surprise** (🌠)
-*   **Disgust** (🌿)
-*   **Tired** (🔋)
-*   **Proud** (🦁)
-*   **Calm** (🧘)
-*   **Lonely** (🌌)
-*   **Excited** (✨)
+A multilingual emotion detection system supporting **Manipuri** (ꯃꯩꯇꯩ ꯃꯌꯦꯛ), **Assamese** (অসমীয়া), and **Mizo** languages, powered by advanced NLP/ML pipelines with automatic language detection.
 
 ---
 
-## 🚀 Key Features
+## ✨ Features
 
-*   **Expanded 11-Class Detection:** Detects nuanced emotions far beyond standard NLP tools.
-*   **Advanced Feature Engineering:** Utilizes a Hybrid FeatureUnion of word-level semantics (1-4 n-grams) and overlapping sub-word chunks (2-6 char n-grams) with extremely low thresholds (`min_df=1`) to capture rare but critical linguistic markers.
-*   **Robust Ensemble Architecture:** Combines `BaggingClassifier` (with `LinearSVC`), `RidgeClassifier`, and `PassiveAggressiveClassifier` via Hard Voting to maximize generalization on highly sparse text matrices.
-*   **Deduplicated & Augmented Data:** Combines multiple data sources into a clean, 1,300+ unique sample training set fortified with natural text augmentation (word duplication, swapping).
-*   **Beautiful Premium UI:** A meticulously designed Streamlit dashboard featuring deep gradients, glassmorphism, floating micro-animations, and real-time probability breakdown bars.
-
----
-
-## 🛠️ Setup & Installation
-
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/riturajhhh/manipuri.git
-    cd manipuri
-    ```
-
-2.  **Initialize Virtual Environment:**
-    ```bash
-    python -m venv .venv
-    .venv\Scripts\activate
-    ```
-
-3.  **Install Dependencies:**
-    ```bash
-    pip install pandas numpy scikit-learn streamlit openpyxl joblib
-    ```
+- **Automatic Language Detection** — Detects Manipuri (Meitei Mayek), Assamese (Bengali script), and Mizo (Latin script) from input text
+- **Multi-Model Architecture** — Separate optimized models per language
+- **11 Emotion Classes** for Manipuri: joy, sadness, anger, fear, surprise, disgust, tired, proud, calm, lonely, excited
+- **7 Emotion Classes** for Assamese: joy, sadness, anger, fear, trust, anticipation, neutral
+- **5 Emotion Classes** for Mizo: joy, sadness, anger, fear, neutral
+- **Optional Transformer Support** — Fine-tune MuRIL for Assamese for higher accuracy
+- **Beautiful Glassmorphism UI** — Dark theme with language badges, confidence scores, and detailed analysis
 
 ---
 
-## 🏃 Usage
+## 🚀 Quick Start
 
-### 1. Launching the Dashboard
-To start the interactive UI and test your own sentences:
+### 1. Setup
+```bash
+python -m venv .venv
+.venv\Scripts\activate     # Windows
+pip install -r requirements.txt
+```
+
+### 2. Train Models
+
+**Manipuri** (already trained):
+```bash
+python models/manipuri/train_manipuri.py
+```
+
+**Assamese (Classical ML)**:
+```bash
+python models/assamese/train_assamese.py
+```
+
+**Mizo (Classical ML)**:
+```bash
+python models/mizo/train_mizo.py
+```
+
+**Assamese (Transformer)** — Higher accuracy, requires GPU (optional):
+```bash
+pip install torch transformers accelerate
+python models/assamese/train_assamese_bert.py
+```
+
+### 3. Run the App
 ```bash
 streamlit run app.py
 ```
 
-### 2. Retraining the Intelligence Engine
-If you add more data to the CSV/Excel files, you can retrain the entire 11-class ensemble:
-```bash
-python train_combined_v2.py
+---
+
+## 📊 Model Performance
+
+| Language | Model | Classes | Accuracy |
+|----------|-------|---------|----------|
+| Manipuri | BaggedSVM + TF-IDF | 11 | ~80% |
+| Assamese | BaggedSVM + TF-IDF | 7 | ~83.3% |
+| Assamese | MuRIL Transformer (optional) | 7 | Expected 95%+ |
+| Mizo     | BaggedSVM + TF-IDF | 5 | ~80% |
+
+---
+
+## 📁 Project Structure
+
 ```
-*This will process both datasets, run the algorithms, and save the optimized pipeline directly to the `manipuri_ultra_final` directory for the app to consume.*
+new_manipuri/
+├── app.py                      # Main Trilingual Dashboard
+├── requirements.txt            # Dependencies
+├── README.md                   # Documentation
+├── datasets/                   # Centralized Datasets
+│   ├── assamese_emotion.xlsx
+│   ├── mizotext.csv
+│   ├── manipuri_emotion_dataset_main1.xlsx
+│   └── meitei_emotion_dataset_100k.csv
+└── models/                     # Modular Models
+    ├── assamese/
+    │   ├── train_assamese.py
+    │   ├── train_assamese_bert.py
+    │   ├── assamese_ultra_final/
+    │   └── assamese_transformer_final/
+    ├── mizo/
+    │   ├── train_mizo.py
+    │   └── mizo_ultra_final/
+    └── manipuri/
+        ├── train_manipuri.py
+        └── manipuri_ultra_final/
+```
 
 ---
 
-## 📂 Project Structure
+## 🛠️ Technology Stack
 
-*   `app.py`: The premium Streamlit web dashboard.
-*   `train_combined_v2.py`: The core training script (Data ingestion, Augmentation, Feature Extraction, Algorithm tuning).
-*   `manipuri_emotion_dataset_main1.xlsx`: The original high-quality emotion dataset.
-*   `meitei_emotion_dataset_100k.csv`: The expanded 100k emotion dataset.
-*   `manipuri_ultra_final/`: Directory containing the serialized production models (`ultra_pipeline.pkl`, `label_encoder.pkl`).
+- **NLP**: TF-IDF (word + char n-grams), MuRIL Transformer
+- **ML**: LinearSVC, BaggingClassifier, LogisticRegression, RidgeClassifier
+- **Frontend**: Streamlit with custom CSS (glassmorphism, gradients)
+- **Languages**: Python 3.10+
 
 ---
 
-## 🛡️ Model Performance
-*   **Accuracy:** 79.70%
-*   **F1-Score:** 80.02%
-*   **Validation:** Rigorously tested on held-out clean data.
+## 📝 Emotion Classes
 
-Developed with ❤️ for the Manipuri Language.
+### Manipuri (11 classes)
+🌈 Joy · 🌊 Sadness · 🌋 Anger · 🛡️ Fear · 🌠 Surprise · 🌿 Disgust · 🔋 Tired · 🦁 Proud · 🧘 Calm · 🌌 Lonely · ✨ Excited
+
+### Assamese (7 classes)
+🌈 Joy · 🌊 Sadness · 🌋 Anger · 🛡️ Fear · 🤝 Trust · ⏳ Anticipation · 😐 Neutral
+
+### Mizo (5 classes)
+🌈 Joy · 🌊 Sadness · 🌋 Anger · 🛡️ Fear · 😐 Neutral
