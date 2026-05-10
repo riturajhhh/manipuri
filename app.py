@@ -222,9 +222,6 @@ def load_manipuri_model():
 
     try:
         pipeline_path = os.path.join(model_dir, "ultra_pipeline.pkl")
-        if not os.path.exists(pipeline_path):
-            pipeline_path = os.path.join(model_dir, "classical_pipeline.pkl")
-
         pipeline = joblib.load(pipeline_path)
         le = joblib.load(os.path.join(model_dir, "label_encoder.pkl"))
         with open(os.path.join(model_dir, "metadata.json"), 'r') as f:
