@@ -61,7 +61,6 @@ streamlit run app.py
 |----------|-------|---------|----------|
 | Manipuri | BaggedSVM + TF-IDF | 11 | ~80% |
 | Assamese | BaggedSVM + TF-IDF | 7 | ~83.3% |
-| Assamese | MuRIL Transformer (optional) | 7 | Expected 95%+ |
 | Mizo     | BaggedSVM + TF-IDF | 5 | ~80% |
 
 ---
