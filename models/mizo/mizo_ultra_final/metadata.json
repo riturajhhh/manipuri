@@ -1,6 +1,8 @@
 {
-  "type": "mizo_svm_c1.0",
+  "model_name": "Mizo Emotion Detection Ultra (v3)",
   "language": "mizo",
+  "script": "Latin",
+  "architecture": "Multi-Granularity Subword TF-IDF + Calibrated Soft-Voting Deep Ensemble",
   "classes": [
     "anger",
     "fear",
@@ -8,9 +10,50 @@
     "neutral",
     "sadness"
   ],
-  "test_accuracy": 0.8003355704697986,
-  "best_model": "svm_c1.0",
-  "n_train": 12662,
+  "test_accuracy": 0.8070469798657718,
+  "test_f1_weighted": 0.806157242631453,
+  "n_train_raw": 3376,
+  "n_train_augmented": 5642,
   "n_test": 596,
-  "n_classes": 5
+  "confusion_matrix": [
+    [
+      73,
+      6,
+      2,
+      1,
+      2
+    ],
+    [
+      5,
+      108,
+      6,
+      4,
+      12
+    ],
+    [
+      2,
+      4,
+      173,
+      8,
+      8
+    ],
+    [
+      2,
+      1,
+      8,
+      37,
+      8
+    ],
+    [
+      6,
+      9,
+      15,
+      6,
+      90
+    ]
+  ],
+  "fit_time_seconds": 20.57,
+  "total_time_seconds": 27.37,
+  "version": "v3_state_of_the_art",
+  "created_at": "2026-09-25 14:50:57"
 }

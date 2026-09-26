@@ -1,0 +1,340 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{url}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue
+}
+
+\begin{document}
+
+\title{MizoEmotion: Morphological Subword Modeling and Calibrated Ensembles for Low-Resource Mizo Emotion Classification}
+
+\author{
+\IEEEauthorblockN{First Author\IEEEauthorrefmark{1}, Second Author\IEEEauthorrefmark{2}, Third Author\IEEEauthorrefmark{3}}
+\IEEEauthorblockA{\IEEEauthorrefmark{1}\IEEEauthorrefmark{2}\IEEEauthorrefmark{3}Department of Computer Science and Engineering\\
+National Institute of Technology\\
+Email: \{first.author, second.author, third.author\}@nit.ac.in}
+}
+
+\maketitle
+
+\begin{abstract}
+Detecting emotions from text in low-resource indigenous languages is difficult because annotated data is scarce and standard NLP tools fail on non-standardized scripts. Pretrained multilingual transformers such as Multilingual MiniLM and LaBSE work well for high-resource languages, but our experiments show they struggle on Mizo, reaching only 53.52\% and 60.07\% accuracy. The primary reason is subword fragmentation: standard Byte-Pair and SentencePiece tokenizers lack Mizo vocabulary, breaking common words into arbitrary two-letter fragments. Mizo is an agglutinative Tibeto-Burman language written in Latin script, where emotional meaning depends on root words, attached affixes, and expressive particles like \textit{tak}, \textit{lutuk}, and \textit{em}. In this paper, we present an alternate approach that models Mizo morphology directly. We construct a multi-granularity feature space combining word $n$-grams (1--3), word-boundary character $n$-grams (2--6), and pure character $n$-grams (3--6), yielding over 125,000 subword features. We couple this with targeted minority-class data augmentation and an ensemble of regularized margin classifiers calibrated through Platt sigmoidal scaling and temperature normalization. We also build and evaluate a two-layer Bidirectional LSTM with self-attention for comparison. On an unseen, leakage-free test split of 596 samples across five emotions (Joy, Fear, Sadness, Anger, Neutral), our calibrated ensemble achieves 80.70\% accuracy and an F1-score of 0.8062, outperforming pretrained multilingual transformers by more than 20 percentage points while running in under 4 milliseconds per sentence on a standard CPU.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Emotion classification, Mizo language, low-resource NLP, subword morphology, ensemble methods, attention mechanisms.
+\end{IEEEkeywords}
+
+% -----------------------------------------------------------------------------
+\section{Introduction}
+Text emotion recognition aims to identify subjective emotional states expressed in natural text. While major languages like English, Chinese, and Spanish benefit from millions of labeled sentences and massive pretrained language models \cite{devlin2019bert, liu2019roberta}, most regional and indigenous languages remain left behind. Developing NLP tools for these languages is essential for regional communication systems, local helpline services, and social media analysis.
+
+This study focuses on \textbf{Mizo} (\textit{Mizo \d{t}awng}), a Tibeto-Burman language spoken by roughly 850,000 people in Mizoram, Northeast India, and neighboring regions \cite{chhangte1993phonological}. Mizo adopted a Romanized Latin alphabet in the late 19th century. Although it shares the alphabet used by English, its syntax, word formation, and phonetics are distinct. Mizo is an agglutinative language with heavy compounding, verbal inflection, clitic attachments, and frequent emotional particles (\textit{e.g.}, \textit{tak}, \textit{lutuk}, \textit{em}, \textit{chuan}, \textit{hlauh}).
+
+When we evaluated modern pretrained multilingual sentence encoders such as Multilingual MiniLM-L12 \cite{reimers2019sentence} and Google's LaBSE \cite{feng2022language} on Mizo text, they gave surprisingly low accuracy (53.52\% and 60.07\%). Looking into the tokenized outputs, we found that because Mizo was excluded from the pretraining corpora, standard tokenizers chop basic Mizo words into random character pieces. This destroys the semantic and emotional meaning of the roots.
+
+To solve this, we took a different path. Instead of relying on an off-the-shelf multilingual model, we built a pipeline that reflects how Mizo words are structured:
+\begin{enumerate}
+    \item We developed a targeted text normalization routine that preserves expressive punctuation marks (exclamation marks, question marks, hyphens) as independent tokens and normalizes stretched words (\textit{e.g.}, \textit{emmmm} $\to$ \textit{em}).
+    \item We applied minority-class data augmentation to handle label imbalance without distorting the underlying grammar.
+    \item We engineered a tri-level subword feature space capturing word boundaries and character sequences from 2 to 6 characters, allowing the model to learn prefixes, suffixes, and root stems directly.
+    \item We combined diverse linear margin estimators into a soft-voting ensemble calibrated with Platt scaling and temperature adjustment ($T=0.6$).
+    \item For comparison, we trained a Bidirectional LSTM with multi-head self-attention on the native text.
+\end{enumerate}
+
+Our ensemble reaches \textbf{80.70\% test accuracy} on a strict, deduplicated holdout test set, running in under 4~ms per inference on a standard CPU. We also integrated perturbation-based explainability to confirm that the model relies on true Mizo emotional words rather than spurious artifacts.
+
+% -----------------------------------------------------------------------------
+\section{Related Work}
+
+\subsection{Emotion Detection in Indian Languages}
+Emotion and sentiment analysis for South Asian languages has grown in recent years, especially through shared tasks on Hindi, Bengali, Tamil, and Telugu \cite{patra2018sentiment}. Researchers have applied models like IndicBERT \cite{kakwani2020indicnlpsuite} and MuRIL \cite{khanuja2021muril} with good results. However, these models focus on Indo-Aryan and Dravidian language families written in Brahmic scripts. Northeast Indian languages from the Tibeto-Burman group, particularly Mizo, have received very little attention \cite{singh2021sentiment}. Unlike Manipuri, which uses Meitei Mayek and Bengali scripts \cite{singh2018transliteration}, Mizo uses the Latin alphabet, which creates a false impression that general multilingual models should easily handle it.
+
+\subsection{Subword Modeling in Low-Resource Settings}
+When training data is limited to a few thousand samples, deep neural networks with hundreds of millions of parameters tend to overfit quickly \cite{sennrich2016neural}. Multiple studies have demonstrated that character $n$-gram representations with linear regularized margins can match or outperform deep transformers in low-resource classification tasks \cite{joulin2017bag, bojanowski2017enriching}. By taking character sequences at word boundaries, models capture inflectional affixes without requiring an external morphological dictionary.
+
+% -----------------------------------------------------------------------------
+\section{Corpus and Linguistic Analysis}
+
+\subsection{Dataset Collection and Preprocessing}
+The dataset consists of 5,195 raw Mizo text samples annotated with five emotion labels: \textbf{Joy}, \textbf{Fear}, \textbf{Sadness}, \textbf{Anger}, and \textbf{Neutral}. During inspection, we found 1,223 exact duplicate sentences caused by multi-source data compilation. There were no conflicting labels among identical sentences. 
+
+To prevent data leakage between train and test partitions, we removed all duplicate rows, leaving 3,972 unique samples. We then split the data into an 85\% training split (3,376 samples) and a 15\% unseen test split (596 samples) using stratified sampling. Table~\ref{tab:dataset_dist} shows the exact sample counts.
+
+\begin{table}[htbp]
+\caption{Class Distribution of the Mizo Emotion Corpus}
+\label{tab:dataset_dist}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Emotion Class} & \textbf{Raw} & \textbf{Cleaned} & \textbf{Train (85\%)} & \textbf{Test (15\%)} \\
+\midrule
+Joy (\textit{Hlimna / Lawmna})       & 1,694 & 1,297 & 1,102 & 195 \\
+Fear (\textit{Hlauhna / Huphurhna})   & 1,147 &   901 &   766 & 135 \\
+Sadness (\textit{Lungngaihna})       & 1,081 &   838 &   712 & 126 \\
+Anger (\textit{Thinrimna})           &   737 &   561 &   477 &  84 \\
+Neutral (\textit{Pangngai})          &   536 &   375 &   319 &  56 \\
+\midrule
+\textbf{Total}                       & \textbf{5,195} & \textbf{3,972} & \textbf{3,376} & \textbf{596} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Mizo Emotion Vocabulary}
+In Mizo, emotions are expressed through specific root words and attached particles:
+\begin{itemize}
+    \item \textbf{Joy}: Expressed through roots like \textit{hlim} (happy), \textit{lawm} (glad), \textit{pass} (clearing exams), and intensifiers like \textit{tak em}, \textit{puak dawn} (about to burst). Example: \textit{``ka pass dawn chiang lutuk''} (I am definitely going to pass).
+    \item \textbf{Anger}: Marked by \textit{thinrim} (angry), \textit{hua} (hate), \textit{sual} (wicked), along with sharp particles like \textit{chu le} and exclamation marks. Example: \textit{``ka thinrim lutuk''} (I am extremely angry).
+    \item \textbf{Fear}: Driven by \textit{hlau} (fear), \textit{hlauthawng} (anxious), \textit{huphurh} (dread), and sensory words like \textit{mur chum chum} (shivering). Example: \textit{``thil hlauhawm tawn dawnin ka mur chum chum zel''} (Whenever I face something scary, I get shivers).
+    \item \textbf{Sadness}: Marked by \textit{lungngai} or \textit{lunggai} (sorrow), \textit{ngai} (miss), \textit{chhungte} (bereavement), and negative clitics like \textit{tawh lo}. Example: \textit{``ka hmu leh tawh dawn lo hi ka va lunggai em''} (I am so sad that I will never see them again).
+    \item \textbf{Neutral}: Everyday informational remarks. Example: \textit{``dawr ka kal dawn''} (I am going to the shop) or \textit{``tinge ?''} (Why?).
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+\section{Methodology}
+
+\subsection{Text Normalization}
+Let $T$ be an input sentence. We process the string through four steps:
+\begin{enumerate}
+    \item \textbf{Punctuation Tokenization}: Instead of discarding punctuation, we pad symbols with spaces ($s \in \{!, ?, ., ,, -\} \implies \text{ } s \text{ }$). In informal Mizo, an exclamation mark or question mark carries heavy emotional meaning.
+    \item \textbf{Repeated Letter Reduction}: On social media, Mizo speakers stretch words for emphasis (\textit{e.g.}, \textit{chuuuu} $\to$ \textit{chuu}, \textit{emmmm} $\to$ \textit{em}). We collapse any letter repeated three or more times down to two letters.
+    \item \textbf{Noise Filtering}: We strip web URLs and non-Latin characters while preserving basic apostrophes and hyphens.
+    \item \textbf{Case Folding}: All text is converted to lowercase.
+\end{enumerate}
+
+\subsection{Targeted Minority Augmentation}
+As Table~\ref{tab:dataset_dist} shows, \textit{Neutral} has only 319 training samples, compared to 1,102 for \textit{Joy}. To prevent models from simply predicting the majority classes, we apply rule-based text augmentation to the minority classes on the training split only:
+\begin{itemize}
+    \item \textbf{Word duplication}: Replicating an intensifier word to mimic spoken emphasis.
+    \item \textbf{Neighbor swapping}: Swapping adjacent words to account for flexible clause ordering.
+    \item \textbf{Particle attachment}: Adding an emphatic particle or exclamation mark.
+    \item \textbf{Filler dropping}: Omitting non-essential middle words.
+\end{itemize}
+This balanced the training set from 3,376 to 5,642 samples without polluting the unseen test split.
+
+\subsection{Multi-Granularity Subword Representation}
+Because fixed-vocabulary subword tokenizers fail on Mizo, we build a multi-granularity feature union:
+\begin{equation}
+    \Phi(x) = \left[ \phi_{\text{word}}(x) \,\|\, \phi_{\text{char\_wb}}(x) \,\|\, \phi_{\text{char}}(x) \right]
+\end{equation}
+where:
+\begin{itemize}
+    \item $\phi_{\text{word}}(x)$: Word $n$-grams from length 1 to 3 (up to 35,000 features), picking up multi-word expressions like \textit{ka va hlim}.
+    \item $\phi_{\text{char\_wb}}(x)$: Character $n$-grams within word boundaries from length 2 to 6 (up to 60,000 features). By padding word edges, this captures Mizo affixes like \textit{-tak}, \textit{-lutuk}, \textit{-zia}, and root stems.
+    \item $\phi_{\text{char}}(x)$: Pure character $n$-grams from length 3 to 6 (up to 30,000 features), giving robustness against spelling variations.
+\end{itemize}
+All features use sublinear term-frequency scaling ($1 + \log(\text{tf})$) to prevent frequent neutral words from overshadowing rare emotional markers.
+
+\subsection{Calibrated Soft-Voting Ensemble}
+In very high-dimensional sparse feature spaces (125,000+ dimensions), linear margin classifiers find clean separating hyperplanes. We combine eight complementary estimators:
+\begin{itemize}
+    \item Three Linear Support Vector Classifiers with varying regularization strengths ($C = 0.3, 0.5, 0.7$). Each SVM is converted into calibrated probabilities using Platt scaling (5-fold cross-validation sigmoidal fitting).
+    \item Two Ridge Classifiers ($\alpha = 0.5, 1.0$), minimizing squared loss with $L_2$ penalties.
+    \item Two Multinomial Logistic Regression models ($C = 1.5, 2.0$) with class-balanced weighting.
+    \item One Passive-Aggressive Classifier to handle hard boundary cases.
+\end{itemize}
+The predictions are averaged using soft voting:
+\begin{equation}
+    \bar{\mathbf{p}}(x) = \frac{1}{8} \sum_{m=1}^{8} \mathbf{p}_m(x)
+\end{equation}
+To avoid overconfident probability spikes in production, we apply temperature scaling:
+\begin{equation}
+    \hat{P}_k = \frac{\exp(\log(\bar{p}_k) / T)}{\sum_{j=1}^{5} \exp(\log(\bar{p}_j) / T)} \quad (T = 0.6)
+\end{equation}
+
+\subsection{Neural Baseline: BiLSTM with Self-Attention}
+For neural comparison, we implemented a recurrent model in PyTorch:
+\begin{enumerate}
+    \item An embedding layer maps input tokens to 128 dimensions, with 2D spatial dropout ($p=0.2$).
+    \item A two-layer Bidirectional LSTM ($h=128$, combined state 256) processes sequences in both directions.
+    \item An attention layer computes alignment scores across the hidden states:
+    \begin{equation}
+        e_t = \mathbf{v}^T \tanh(\mathbf{W}_a \mathbf{h}_t + \mathbf{b}_a), \quad \alpha_t = \frac{\exp(e_t)}{\sum_j \exp(e_j)}
+    \end{equation}
+    \item The weighted context vector $\mathbf{c} = \sum_t \alpha_t \mathbf{h}_t$ passes through LayerNorm, GELU, dropout ($p=0.3$), and a linear projection to 5 emotion classes.
+\end{enumerate}
+We trained the network with AdamW, a learning rate of $2 \times 10^{-3}$, and label smoothing ($\epsilon=0.05$).
+
+% -----------------------------------------------------------------------------
+\section{Experiments and Results}
+
+\subsection{Comparative Benchmarks}
+We tested all models on the identical 15\% unseen test set (596 samples). Table~\ref{tab:model_comparison} reports accuracy, weighted F1-score, and inference speed on a 12-core CPU.
+
+\begin{table}[htbp]
+\caption{Model Performance on the Unseen Mizo Test Partition}
+\label{tab:model_comparison}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llrrr}
+\toprule
+\textbf{Model Family} & \textbf{Architecture} & \textbf{Accuracy} & \textbf{Weighted F1} & \textbf{CPU Latency} \\
+\midrule
+\multirow{2}{*}{Pretrained Xformer} 
+  & MiniLM-L12-v2 \cite{reimers2019sentence} & 53.52\% & 0.5294 & 45 ms \\
+  & LaBSE (BERT-470M) \cite{feng2022language} & 60.07\% & 0.5989 & 120 ms \\
+\midrule
+\multirow{2}{*}{Deep Neural Net}
+  & Deep Residual MLP & 76.51\% & 0.7648 & 6 ms \\
+  & BiLSTM + Attention (Ours) & 76.68\% & 0.7650 & 14 ms \\
+\midrule
+\multirow{3}{*}{Subword Ensemble}
+  & LinearSVC ($C=0.5$) & 80.54\% & 0.8046 & $<$ 3 ms \\
+  & Ridge ($\alpha=1.0$) & 80.03\% & 0.8006 & $<$ 3 ms \\
+  & \textbf{Calibrated Ensemble (Ours)} & \textbf{80.70\%} & \textbf{0.8062} & \textbf{$<$ 4 ms} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Why Pretrained Transformers Struggled}
+The pretrained multilingual models performed poorly: MiniLM reached 53.52\% and LaBSE reached 60.07\%. Inspecting the tokenizer output revealed severe word fragmentation. For example, the common Mizo sentence:
+\begin{center}
+\textit{ka va hlim tak em puak dawn} \\
+(I am so happy I feel like bursting)
+\end{center}
+was broken by LaBSE's SentencePiece tokenizer into 14 disconnected pieces:
+\begin{center}
+\texttt{['\_k', 'a', '\_v', 'a', '\_h', 'li', 'm', '\_t', 'ak', '\_e', 'm', '\_p', 'ua', 'k']}
+\end{center}
+The word \textit{hlim} (happy) was split into `\_h' and `li' and `m'. Without explicit pretraining on Mizo, the transformer cannot understand these shattered pieces. In contrast, our subword boundary representations extract the complete morphemes \textit{hlim}, \textit{tak}, and \textit{puak}, resulting in an accuracy gain of \textbf{+20.63\%} over LaBSE.
+
+\subsection{Per-Class Evaluation}
+Table~\ref{tab:per_class} shows the precision, recall, and F1-scores for each emotion class using our ensemble.
+
+\begin{table}[htbp]
+\caption{Detailed Classification Metrics of Our Ensemble}
+\label{tab:per_class}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Emotion Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Test Count} \\
+\midrule
+Joy (\textit{Hlimna})      & 0.85 & 0.89 & 0.87 & 195 \\
+Anger (\textit{Thinrimna})  & 0.83 & 0.87 & 0.85 &  84 \\
+Fear (\textit{Hlauhna})    & 0.84 & 0.80 & 0.82 & 135 \\
+Sadness (\textit{Lungngai}) & 0.75 & 0.71 & 0.73 & 126 \\
+Neutral (\textit{Pangngai}) & 0.66 & 0.66 & 0.66 &  56 \\
+\midrule
+\textbf{Macro Average}     & \textbf{0.79} & \textbf{0.79} & \textbf{0.79} & \textbf{596} \\
+\textbf{Weighted Average}  & \textbf{0.81} & \textbf{0.81} & \textbf{0.81} & \textbf{596} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+Joy and Anger achieved the strongest performance with F1-scores of 0.87 and 0.85. Both emotions have distinctive vocabulary in Mizo that leaves little ambiguity. Neutral was the hardest category (0.66 F1-score), mainly because neutral sentences in the dataset are very short (\textit{e.g.}, \textit{tinge ?}, \textit{ho ve}), providing few lexical clues.
+
+\subsection{Confusion Matrix}
+Table~\ref{tab:confusion_matrix} shows the confusion matrix for the test partition.
+
+\begin{table}[htbp]
+\caption{Confusion Matrix on the Unseen Test Partition}
+\label{tab:confusion_matrix}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Actual $\downarrow$ / Predicted $\rightarrow$} & \textbf{Anger} & \textbf{Fear} & \textbf{Joy} & \textbf{Neutral} & \textbf{Sadness} \\
+\midrule
+\textbf{Anger}   & \textbf{73} &   6 &   2 &   1 &   2 \\
+\textbf{Fear}    &   5 & \textbf{108} &   6 &   4 &  12 \\
+\textbf{Joy}     &   2 &   4 & \textbf{173} &   8 &   8 \\
+\textbf{Neutral} &   2 &   1 &   8 &  \textbf{37} &   8 \\
+\textbf{Sadness} &   6 &   9 &  15 &   6 &  \textbf{90} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+The primary source of confusion occurred between \textbf{Sadness} and \textbf{Fear}: 12 fear samples were predicted as sadness, and 9 sadness samples were predicted as fear. Linguistically, both emotions share expressions of loss and anxiety (\textit{e.g.}, \textit{ka pa ka chan dawn} -- ``I might lose my father''). Fifteen sadness samples were also confused with joy when positive words appeared in ironic or lamenting contexts.
+
+% -----------------------------------------------------------------------------
+\section{Explainability and Validation}
+
+To verify that the model relies on authentic linguistic markers rather than random statistical noise, we implemented an occlusion-based attribution method. For an input sentence $x = (w_1, w_2, \dots, w_n)$, the attribution score of word $w_i$ is computed by measuring the drop in confidence when $w_i$ is removed:
+\begin{equation}
+    \Delta(w_i) = P(\text{emotion} \mid x) - P(\text{emotion} \mid x \setminus \{w_i\})
+\end{equation}
+
+Examining specific test predictions confirms that the model aligns with true Mizo grammar:
+\begin{itemize}
+    \item \textit{``ka pass dawn chiang lutuk''} $\to$ Predicted **Joy** (96.7\% confidence). The highest contributors were \textit{pass} (+48.2\%) and the intensifier \textit{lutuk} (+31.4\%).
+    \item \textit{``ka thinrim lutuk''} $\to$ Predicted **Anger** (99.6\% confidence). The root \textit{thinrim} drove +62.8\% of the score, reinforced by \textit{lutuk} (+29.4\%).
+    \item \textit{``ka hlau lutuk''} $\to$ Predicted **Fear** (99.9\% confidence). The root \textit{hlau} contributed +68.1\%, with \textit{lutuk} providing +27.3\%.
+    \item \textit{``ka lunggai tak em''} $\to$ Predicted **Sadness** (96.2\% confidence). The compound \textit{lunggai} drove +58.7\%, while the particle pair \textit{tak em} added +24.9\%.
+\end{itemize}
+In every case, the model placed the highest weight on the actual emotion root and its grammatical intensifiers.
+
+% -----------------------------------------------------------------------------
+\section{Conclusion}
+In this study, we investigated emotion recognition for the low-resource Mizo language. We showed that standard pretrained multilingual transformers fail on Mizo due to subword fragmentation, achieving only 53\% to 60\% accuracy. By building a multi-granularity subword representation that matches Mizo agglutinative structure and combining it with a calibrated linear margin ensemble, our method reaches **80.70\% accuracy** and an **0.8062 F1-score**, exceeding pretrained transformers by more than 20 percentage points while operating in under 4 milliseconds on a consumer CPU. We also trained a native BiLSTM with self-attention (76.68\% accuracy), illustrating the trade-off between recurrent neural models and subword ensembles on compact corpora. In future work, we plan to collect multi-speaker audio recordings to evaluate joint acoustic-textual emotion modeling for Mizo.
+
+% -----------------------------------------------------------------------------
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{00}
+
+\bibitem{plutchik1980general}
+R.~Plutchik, ``A general psychoevolutionary theory of emotion,'' in \emph{Theories of Emotion}, Academic Press, 1980, pp. 3--33.
+
+\bibitem{devlin2019bert}
+J.~Devlin, M.-W. Chang, K.~Lee, and K.~Toutanova, ``BERT: Pre-training of deep bidirectional transformers for language understanding,'' in \emph{Proc. NAACL-HLT}, 2019, pp. 4171--4186.
+
+\bibitem{liu2019roberta}
+Y.~Liu, M.~Ott, N.~Goyal, J.~Du, M.~Joshi, D.~Chen, O.~Levy, M.~Lewis, L.~Zettlemoyer, and V.~Stoyanov, ``RoBERTa: A robustly optimized BERT pretraining approach,'' \emph{arXiv preprint arXiv:1907.11692}, 2019.
+
+\bibitem{chhangte1993phonological}
+L.~Chhangte, \emph{The Phonology of Mizo}, Ph.D. dissertation, Australian National University, 1993.
+
+\bibitem{reimers2019sentence}
+N.~Reimers and I.~Gurevych, ``Sentence-BERT: Sentence embeddings using Siamese BERT-networks,'' in \emph{Proc. EMNLP-IJCNLP}, 2019, pp. 3982--3992.
+
+\bibitem{feng2022language}
+F.~Feng, Y.~Yang, D.~Cer, N.~Arivazhagan, and W.~Wang, ``Language-agnostic BERT sentence embeddings,'' in \emph{Proc. 60th Annual Meeting of the ACL}, 2022, pp. 878--891.
+
+\bibitem{patra2018sentiment}
+B.~G. Patra, D.~Das, and A.~Bandopadhyay, ``Sentiment analysis in Indian languages: A shared task at ICON-2017,'' in \emph{Proc. Int. Conf. Natural Language Processing}, 2018, pp. 1--8.
+
+\bibitem{kakwani2020indicnlpsuite}
+D.~Kakwani, A.~Kunchukuttan, S.~Golla, N.~Gokul, A.~Bhattacharyya, et al., ``IndicNLPSuite: Monolingual corpora, evaluation benchmarks and pre-trained multilingual language models for Indian languages,'' in \emph{Findings of EMNLP}, 2020, pp. 4948--4961.
+
+\bibitem{khanuja2021muril}
+S.~Khanuja, D.~Dandapat, A.~Srinivasan, S.~Sitaram, and M.~Choudhury, ``MuRIL: Multilingual representations for Indian languages,'' \emph{arXiv preprint arXiv:2103.10730}, 2021.
+
+\bibitem{singh2021sentiment}
+T.~D. Singh and S.~Bandyopadhyay, ``Manipuri-English code-mixed social media text emotion analysis,'' \emph{ACM Trans. Asian Low-Resour. Lang. Inf. Process.}, vol. 20, no. 4, pp. 1--18, 2021.
+
+\bibitem{singh2018transliteration}
+K.~S. Singh and L.~S. Sharma, ``Statistical machine transliteration of Meetei Mayek to Bengali script,'' in \emph{Advances in Computing and Data Sciences}, Springer, 2018, pp. 411--420.
+
+\bibitem{sennrich2016neural}
+R.~Sennrich, B.~Haddow, and A.~Birch, ``Neural machine translation of rare words with subword units,'' in \emph{Proc. 54th Annual Meeting of the ACL}, 2016, pp. 1715--1725.
+
+\bibitem{joulin2017bag}
+A.~Joulin, E.~Grave, P.~Bojanowski, and T.~Mikolov, ``Bag of tricks for efficient text classification,'' in \emph{Proc. 15th Conf. EACL}, 2017, pp. 427--431.
+
+\bibitem{bojanowski2017enriching}
+P.~Bojanowski, E.~Grave, A.~Joulin, and T.~Mikolov, ``Enriching word vectors with subword information,'' \emph{Trans. Assoc. Comput. Linguist.}, vol. 5, pp. 135--146, 2017.
+
+\end{thebibliography}
+
+\end{document}

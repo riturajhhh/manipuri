@@ -67,3 +67,5 @@ results/
 logs/
 confusion_matrix.png
 emotion_distribution.png
+feedback.db
+*.db
